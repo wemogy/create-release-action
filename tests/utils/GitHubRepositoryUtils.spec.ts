@@ -2,7 +2,6 @@ import "jest";
 import * as env from "../../env/env.json";
 import GitHubRepositoryUtils from "../../src/utils/GitHubRepositoryUtils";
 import { Octokit } from "@octokit/rest";
-import exp from "constants";
 
 const owner = "SebastianKuesters";
 const repo = "test-repo-1711053208918";
