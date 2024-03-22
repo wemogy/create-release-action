@@ -53,7 +53,7 @@ async function run() {
   await gitHubRepositoryUtils.createRelease(
     releaseVersionTag,
     releaseTitle,
-    releaseNotes,
+    releaseNotes || "No release notes provided",
     preRelease
   );
 }

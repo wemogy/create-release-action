@@ -29155,7 +29155,7 @@ function run() {
             return;
         }
         core.info(`Creating release with the following notes:\n${releaseNotes}`);
-        yield gitHubRepositoryUtils.createRelease(releaseVersionTag, releaseTitle, releaseNotes, preRelease);
+        yield gitHubRepositoryUtils.createRelease(releaseVersionTag, releaseTitle, releaseNotes || "No release notes provided", preRelease);
     });
 }
 run();
