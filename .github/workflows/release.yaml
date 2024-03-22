@@ -18,7 +18,6 @@ jobs:
       - uses: wemogy/get-release-version-action@v3.0.3
         id: get-release-version
 
-      # Determine Release Version
       - name: Create GitHub Release
         uses: ./
         with:
