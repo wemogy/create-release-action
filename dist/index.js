@@ -29311,7 +29311,7 @@ class GitHubRepositoryUtils {
         });
     }
     getCommitsBetweenTags(startTag_1, endTag_1) {
-        return __awaiter(this, arguments, void 0, function* (startTag, endTag, branch = "main") {
+        return __awaiter(this, arguments, void 0, function* (startTag, endTag, branch = "main", includeStartTag = false) {
             // destructuring
             const { owner, repo, octokit } = this;
             // Get the commit corresponding to the start tag
@@ -29333,7 +29333,9 @@ class GitHubRepositoryUtils {
                 basehead: `${startCommit.sha}...${endTag}`,
             });
             // Prepend the commit corresponding to the start tag
-            compareCommitsWithBaseheadResponse.data.commits.unshift(startCommit);
+            if (includeStartTag) {
+                compareCommitsWithBaseheadResponse.data.commits.unshift(startCommit);
+            }
             return compareCommitsWithBaseheadResponse.data.commits;
         });
     }
