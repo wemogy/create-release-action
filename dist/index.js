@@ -29239,9 +29239,14 @@ class GitHubRepositoryUtils {
                 if (issueOrPr.pull_request) {
                     const issueNumbersOfPr = yield this.getReferencedIssuesFromPullRequest(issueOrPr.number);
                     const issues = yield this.getIssuesAndPrsByNumbers(issueNumbersOfPr);
-                    result.push(...issues);
+                    result.push(...issues.filter((item) => item !== null &&
+                        result.find((i) => i.id === item.id) === undefined));
                 }
                 else {
+                    // Check if the issue is already in the result
+                    if (result.find((item) => item.id === issueOrPr.id)) {
+                        continue;
+                    }
                     result.push(issueOrPr);
                 }
             }
