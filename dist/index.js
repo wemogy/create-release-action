@@ -29091,11 +29091,25 @@ function wrappy (fn, cb) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 class ReleaseNotesGenerator {
     generateReleaseNotes(issues) {
-        const releaseNotes = issues.map((issue) => {
-            const type = issue.pull_request ? "PR" : "Issue";
-            return `* ${type} #${issue.number} - ${issue.title}`;
-        });
-        return releaseNotes.join("\n");
+        let releaseNotes = "## Release Notes\n\n";
+        const enhancements = issues.filter((issue) => issue.labels.includes("enhancement"));
+        if (enhancements.length > 0) {
+            releaseNotes += "### Enhancements 🎁\n\n";
+            enhancements.forEach((issue) => {
+                releaseNotes += `- ${issue.title} (#${issue.number})\n`;
+            });
+        }
+        const bugs = issues.filter((issue) => issue.labels.includes("bug"));
+        if (bugs.length > 0) {
+            releaseNotes += "### Bug Fixes 🐞\n\n";
+            bugs.forEach((issue) => {
+                releaseNotes += `- ${issue.title} (#${issue.number})\n`;
+            });
+        }
+        if (enhancements.length === 0 && bugs.length === 0) {
+            releaseNotes += "No enhancements or bug fixes in this release.";
+        }
+        return releaseNotes;
     }
 }
 exports["default"] = ReleaseNotesGenerator;
@@ -29239,9 +29253,14 @@ class GitHubRepositoryUtils {
                 if (issueOrPr.pull_request) {
                     const issueNumbersOfPr = yield this.getReferencedIssuesFromPullRequest(issueOrPr.number);
                     const issues = yield this.getIssuesAndPrsByNumbers(issueNumbersOfPr);
-                    result.push(...issues);
+                    result.push(...issues.filter((item) => item !== null &&
+                        result.find((i) => i.id === item.id) === undefined));
                 }
                 else {
+                    // Check if the issue is already in the result
+                    if (result.find((item) => item.id === issueOrPr.id)) {
+                        continue;
+                    }
                     result.push(issueOrPr);
                 }
             }
