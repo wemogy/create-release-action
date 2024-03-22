@@ -29134,7 +29134,9 @@ function run() {
             required: true,
         });
         const releaseTitle = core.getInput("release-title", { required: true });
-        const previousReleaseVersionTag = core.getInput("previous-release-version-tag", { required: false });
+        const previousVersionTag = core.getInput("previous-version-tag", {
+            required: false,
+        });
         const preRelease = core.getInput("pre-release", { required: false }) === "true";
         const dryRun = core.getInput("dry-run", { required: false }) === "true";
         // Get context information
@@ -29146,7 +29148,7 @@ function run() {
         const gitHubRepositoryUtils = new GitHubRepositoryUtils_1.default(owner, repo, octokit);
         const releaseNotesGenerator = new ReleaseNotesGenerator_1.default();
         // Get the referenced issues between the previous release and the current release
-        const issues = yield gitHubRepositoryUtils.getReferencedIssuesBetweenTags(previousReleaseVersionTag, releaseVersionTag, github.context.ref);
+        const issues = yield gitHubRepositoryUtils.getReferencedIssuesBetweenTags(previousVersionTag, releaseVersionTag, github.context.ref);
         core.info(`Found ${issues.length} issues between tags`);
         // Create the release notes
         const releaseNotes = releaseNotesGenerator.generateReleaseNotes(issues);
