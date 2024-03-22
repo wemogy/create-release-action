@@ -148,7 +148,8 @@ export default class GitHubRepositoryUtils {
   public async getCommitsBetweenTags(
     startTag: string,
     endTag: string,
-    branch: string = "main"
+    branch: string = "main",
+    includeStartTag: boolean = false
   ) {
     // destructuring
     const { owner, repo, octokit } = this;
@@ -179,7 +180,9 @@ export default class GitHubRepositoryUtils {
       });
 
     // Prepend the commit corresponding to the start tag
-    compareCommitsWithBaseheadResponse.data.commits.unshift(startCommit);
+    if (includeStartTag) {
+      compareCommitsWithBaseheadResponse.data.commits.unshift(startCommit);
+    }
 
     return compareCommitsWithBaseheadResponse.data.commits;
   }
