@@ -1,3 +1,4 @@
+import { Octokit } from "@octokit/rest";
 import ReleaseNotesGenerator from "./ReleaseNotesGenerator";
 import GitHubRepositoryUtils from "./utils/GitHubRepositoryUtils";
 
@@ -23,7 +24,9 @@ async function run() {
   const { owner, repo } = github.context.repo;
 
   // construct services
-  const octokit = github.getOctokit(token);
+  const octokit = new Octokit({
+    auth: token,
+  });
   const gitHubRepositoryUtils = new GitHubRepositoryUtils(owner, repo, octokit);
   const releaseNotesGenerator = new ReleaseNotesGenerator();
 
