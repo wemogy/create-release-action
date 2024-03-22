@@ -29145,8 +29145,9 @@ function run() {
         });
         const gitHubRepositoryUtils = new GitHubRepositoryUtils_1.default(owner, repo, octokit);
         const releaseNotesGenerator = new ReleaseNotesGenerator_1.default();
+        core.info(`DEBUG ${github.context.ref} ---  ${github.context.sha}`);
         // Get the referenced issues between the previous release and the current release
-        const issues = yield gitHubRepositoryUtils.getReferencedIssuesBetweenTags(previousReleaseVersionTag, releaseVersionTag, "release");
+        const issues = yield gitHubRepositoryUtils.getReferencedIssuesBetweenTags(previousReleaseVersionTag, releaseVersionTag, github.context.ref);
         // Create the release notes
         const releaseNotes = releaseNotesGenerator.generateReleaseNotes(issues);
         // Create the release
