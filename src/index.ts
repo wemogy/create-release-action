@@ -30,7 +30,8 @@ async function run() {
   // Get the referenced issues between the previous release and the current release
   const issues = await gitHubRepositoryUtils.getReferencedIssuesBetweenTags(
     previousReleaseVersionTag,
-    releaseVersionTag
+    releaseVersionTag,
+    "release"
   );
 
   // Create the release notes

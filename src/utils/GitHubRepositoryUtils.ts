@@ -10,12 +10,14 @@ export default class GitHubRepositoryUtils {
 
   public async getReferencedIssuesBetweenTags(
     startTag: string,
-    endTag: string
+    endTag: string,
+    branch: string = "main"
   ) {
     // Get all issues and PRs between start and end tag
     const issuesAndPrs = await this.getReferencedIssuesAndPrsBetweenTags(
       startTag,
-      endTag
+      endTag,
+      branch
     );
 
     // Flatten issues and PRs
@@ -26,9 +28,10 @@ export default class GitHubRepositoryUtils {
 
   public async getReferencedIssuesAndPrsBetweenTags(
     startTag: string,
-    endTag: string
+    endTag: string,
+    branch: string = "main"
   ) {
-    const commits = await this.getCommitsBetweenTags(startTag, endTag);
+    const commits = await this.getCommitsBetweenTags(startTag, endTag, branch);
 
     // Get all referenced issues and PRs from the commit messages
     const referencedIssuesAndPrs = commits
@@ -131,7 +134,11 @@ export default class GitHubRepositoryUtils {
     }
   }
 
-  public async getCommitsBetweenTags(startTag: string, endTag: string) {
+  public async getCommitsBetweenTags(
+    startTag: string,
+    endTag: string,
+    branch: string = "main"
+  ) {
     // destructuring
     const { owner, repo, octokit } = this;
 
@@ -148,7 +155,7 @@ export default class GitHubRepositoryUtils {
           await octokit.repos.listCommits({
             owner,
             repo,
-            branch: "main",
+            branch,
           })
         ).data.pop();
 
