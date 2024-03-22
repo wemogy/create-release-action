@@ -29106,7 +29106,14 @@ class ReleaseNotesGenerator {
                 releaseNotes += `- ${issue.title} (#${issue.number})\n`;
             });
         }
-        if (enhancements.length === 0 && bugs.length === 0) {
+        const others = issues.filter((issue) => !issue.labels.includes("enhancement") && !issue.labels.includes("bug"));
+        if (others.length > 0) {
+            releaseNotes += "### Others 📚\n\n";
+            others.forEach((issue) => {
+                releaseNotes += `- ${issue.title} (#${issue.number})\n`;
+            });
+        }
+        if (enhancements.length === 0 && bugs.length === 0 && others.length === 0) {
             releaseNotes += "No enhancements or bug fixes in this release.";
         }
         return releaseNotes;
