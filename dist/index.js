@@ -29154,6 +29154,7 @@ function run() {
             core.info(`Dry run: Would have created release with the following notes:\n${releaseNotes}`);
             return;
         }
+        core.info(`Creating release with the following notes:\n${releaseNotes}`);
         yield gitHubRepositoryUtils.createRelease(releaseVersionTag, releaseTitle, releaseNotes, preRelease);
     });
 }
