@@ -1,0 +1,27 @@
+name: Create Release
+author: wemogy GmbH
+description: Create a GitHub Release with generated release notes
+branding:
+  color: blue
+  icon: code
+inputs:
+  github-token:
+    description: The GitHub token used to create an authenticated client
+    default: ${{ github.token }}
+    required: true
+  release-version-tag:
+    description: The name of the tag to create the Release for
+    default: ${{ github.ref }}
+  release-title:
+    description: Title of the release
+    required: true
+  pre-release:
+    description: Indicator of whether or not is a prerelease
+    default: "false"
+  previous-version-tag:
+    description: The name of the previous version
+    default: ""
+
+runs:
+  using: "node20"
+  main: "dist/index.js"

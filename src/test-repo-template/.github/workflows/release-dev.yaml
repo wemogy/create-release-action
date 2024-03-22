@@ -1,0 +1,26 @@
+name: Tag Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: developemnt
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    name: Tag & Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT }}
+
+      - uses: wemogy/get-release-version-action@v3.0.3
+        id: get-release-version
