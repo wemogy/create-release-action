@@ -29199,6 +29199,7 @@ class GitHubRepositoryUtils {
             const referencedIssuesAndPrs = commits
                 .map((commit) => commit.commit.message.match(/#\d+/g))
                 .flat()
+                .filter((issue) => issue !== null)
                 .map((issue) => parseInt(issue.replace("#", "")));
             // Remove duplicates
             const numbers = Array.from(new Set(referencedIssuesAndPrs));
