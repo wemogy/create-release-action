@@ -48,6 +48,8 @@ async function run() {
     return;
   }
 
+  core.info(`Creating release with the following notes:\n${releaseNotes}`);
+
   await gitHubRepositoryUtils.createRelease(
     releaseVersionTag,
     releaseTitle,
