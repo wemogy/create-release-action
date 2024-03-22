@@ -30,14 +30,14 @@ async function run() {
   const gitHubRepositoryUtils = new GitHubRepositoryUtils(owner, repo, octokit);
   const releaseNotesGenerator = new ReleaseNotesGenerator();
 
-  core.info(`DEBUG ${github.context.ref} ---  ${github.context.sha}`);
-
   // Get the referenced issues between the previous release and the current release
   const issues = await gitHubRepositoryUtils.getReferencedIssuesBetweenTags(
     previousReleaseVersionTag,
     releaseVersionTag,
     github.context.ref
   );
+
+  core.info(`Found ${issues.length} issues between tags`);
 
   // Create the release notes
   const releaseNotes = releaseNotesGenerator.generateReleaseNotes(issues);
