@@ -15,7 +15,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: wemogy/get-release-version-action@v3.0.3
+      - uses: wemogy/get-release-version-action@v3.1.1
         id: get-release-version
 
       - name: Create GitHub Release
