@@ -1,6 +1,7 @@
 import { Octokit } from "@octokit/rest";
 import ReleaseNotesGenerator from "./ReleaseNotesGenerator";
 import GitHubRepositoryUtils from "./utils/GitHubRepositoryUtils";
+import GitHubProjectsUtils from "./utils/GitHubProjectsUtils";
 
 const github = require("@actions/github");
 const core = require("@actions/core");
@@ -18,6 +19,13 @@ async function run() {
   const preRelease =
     core.getInput("pre-release", { required: false }) === "true";
   const dryRun = core.getInput("dry-run", { required: false }) === "true";
+  const labelIssuesWith = core.getInput("label-issues-with", {
+    required: false,
+  });
+  const projectNumber = core.getInput("project-number", { required: false });
+  const projectStatusColumnName = core.getInput("project-status-column-name", {
+    required: false,
+  });
 
   // Get context information
   const { owner, repo } = github.context.repo;
@@ -27,6 +35,7 @@ async function run() {
     auth: token,
   });
   const gitHubRepositoryUtils = new GitHubRepositoryUtils(owner, repo, octokit);
+  const gitHubProjectsUtils = new GitHubProjectsUtils(owner, repo, octokit);
   const releaseNotesGenerator = new ReleaseNotesGenerator();
 
   // Get the referenced issues between the previous release and the current release
@@ -46,17 +55,36 @@ async function run() {
     core.info(
       `Dry run: Would have created release with the following notes:\n${releaseNotes}`
     );
-    return;
+  } else {
+    core.info(`Creating release with the following notes:\n${releaseNotes}`);
+
+    await gitHubRepositoryUtils.createRelease(
+      releaseVersionTag,
+      releaseTitle,
+      releaseNotes || "No release notes provided",
+      preRelease
+    );
   }
 
-  core.info(`Creating release with the following notes:\n${releaseNotes}`);
+  // Label issues
+  if (labelIssuesWith) {
+    const issueNumbers = issues.map((issue) => issue.number);
+    await gitHubRepositoryUtils.addLabelToIssues(issueNumbers, labelIssuesWith);
+  }
 
-  await gitHubRepositoryUtils.createRelease(
-    releaseVersionTag,
-    releaseTitle,
-    releaseNotes || "No release notes provided",
-    preRelease
-  );
+  // Update project
+  if (projectNumber && projectStatusColumnName) {
+    const parsedProjectNumber = parseInt(projectNumber);
+
+    for (const issue of issues) {
+      await gitHubProjectsUtils.updateProjectField(
+        parsedProjectNumber,
+        issue.number,
+        "Status",
+        projectStatusColumnName
+      );
+    }
+  }
 }
 
 run();

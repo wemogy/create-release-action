@@ -4,7 +4,7 @@ import GitHubRepositoryUtils from "../../src/utils/GitHubRepositoryUtils";
 import { Octokit } from "@octokit/rest";
 
 const owner = env.OWNER;
-const repo = env.REPO; //"test-repo-1711053208918";
+const repo = env.REPO;
 
 describe("GitHubRepositoryUtils", () => {
   const octokit = new Octokit({
@@ -171,6 +171,20 @@ describe("GitHubRepositoryUtils", () => {
       // Assert
       expect(issues).toBeDefined();
       expect(issues.length).toBe(0);
+    });
+  });
+  describe("addLabelToIssues", () => {
+    it("should add a label to the issues", async () => {
+      // Arrange
+      const issues = [1, 2];
+      const label = "released-prod";
+
+      // Act
+      await gitHubRepositoryUtils.addLabelToIssues(issues, label);
+      await gitHubRepositoryUtils.addLabelToIssues(issues, label);
+
+      // Assert
+      // No assertion as the method is void
     });
   });
 });
