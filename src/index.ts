@@ -66,8 +66,11 @@ async function run() {
     );
   }
 
+  core.info("Continuing to label issues");
+
   // Label issues
   if (labelIssuesWith) {
+    core.info(`Labeling issues with ${labelIssuesWith}`);
     const issueNumbers = issues.map((issue) => issue.number);
     await gitHubRepositoryUtils.addLabelToIssues(issueNumbers, labelIssuesWith);
   }
