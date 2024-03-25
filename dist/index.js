@@ -29145,6 +29145,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const rest_1 = __nccwpck_require__(5375);
 const ReleaseNotesGenerator_1 = __importDefault(__nccwpck_require__(6686));
 const GitHubRepositoryUtils_1 = __importDefault(__nccwpck_require__(7001));
+const GitHubProjectsUtils_1 = __importDefault(__nccwpck_require__(2175));
 const github = __nccwpck_require__(5438);
 const core = __nccwpck_require__(2186);
 function run() {
@@ -29160,6 +29161,13 @@ function run() {
         });
         const preRelease = core.getInput("pre-release", { required: false }) === "true";
         const dryRun = core.getInput("dry-run", { required: false }) === "true";
+        const labelIssuesWith = core.getInput("label-issues-with", {
+            required: false,
+        });
+        const projectNumber = core.getInput("project-number", { required: false });
+        const projectStatusColumnName = core.getInput("project-status-column-name", {
+            required: false,
+        });
         // Get context information
         const { owner, repo } = github.context.repo;
         // construct services
@@ -29167,6 +29175,7 @@ function run() {
             auth: token,
         });
         const gitHubRepositoryUtils = new GitHubRepositoryUtils_1.default(owner, repo, octokit);
+        const gitHubProjectsUtils = new GitHubProjectsUtils_1.default(owner, repo, octokit);
         const releaseNotesGenerator = new ReleaseNotesGenerator_1.default();
         // Get the referenced issues between the previous release and the current release
         const issues = yield gitHubRepositoryUtils.getReferencedIssuesBetweenTags(previousVersionTag, releaseVersionTag, github.context.ref);
@@ -29176,13 +29185,211 @@ function run() {
         // Create the release
         if (dryRun) {
             core.info(`Dry run: Would have created release with the following notes:\n${releaseNotes}`);
-            return;
         }
-        core.info(`Creating release with the following notes:\n${releaseNotes}`);
-        yield gitHubRepositoryUtils.createRelease(releaseVersionTag, releaseTitle, releaseNotes || "No release notes provided", preRelease);
+        else {
+            core.info(`Creating release with the following notes:\n${releaseNotes}`);
+            yield gitHubRepositoryUtils.createRelease(releaseVersionTag, releaseTitle, releaseNotes || "No release notes provided", preRelease);
+        }
+        core.info("Continuing to label issues");
+        // Label issues
+        if (labelIssuesWith) {
+            core.info(`Labeling issues with ${labelIssuesWith}`);
+            const issueNumbers = issues.map((issue) => issue.number);
+            yield gitHubRepositoryUtils.addLabelToIssues(issueNumbers, labelIssuesWith);
+        }
+        // Update project
+        core.info(`Project number: ${projectNumber}`);
+        core.info(`Project status column name: ${projectStatusColumnName}`);
+        core.info(`Issues: ${issues.map((issue) => issue.number).join(", ")}`);
+        core.info(`Debug: ${projectNumber && projectStatusColumnName}`);
+        if (projectNumber && projectStatusColumnName) {
+            core.info(`Updating project ${projectNumber} with status ${projectStatusColumnName}`);
+            const parsedProjectNumber = parseInt(projectNumber);
+            for (const issue of issues) {
+                core.info(`Updating project card of issue ${issue.number} with status ${projectStatusColumnName}`);
+                yield gitHubProjectsUtils.updateProjectField(parsedProjectNumber, issue.number, "Status", projectStatusColumnName);
+            }
+        }
     });
 }
 run();
+
+
+/***/ }),
+
+/***/ 2175:
+/***/ (function(__unused_webpack_module, exports) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+/**
+ * Implementation based on these projects:
+ * - https://github.com/titoportas/update-project-fields
+ * - https://github.com/actions/add-to-project
+ */
+class GitHubProjectsUtils {
+    constructor(owner, repo, octokit) {
+        this.owner = owner;
+        this.repo = repo;
+        this.octokit = octokit;
+    }
+    getProjectId(projectNumber) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Destructuring
+            const { owner, repo, octokit } = this;
+            // Determine the type of owner to query
+            const repository = yield octokit.repos.get({
+                owner,
+                repo,
+            });
+            const ownerType = repository.data.owner.type.toLowerCase();
+            // First, use the GraphQL API to request the project's node ID.
+            const idResp = yield octokit.graphql(`query getProject($projectOwnerName: String!, $projectNumber: Int!) {
+        ${ownerType}(login: $projectOwnerName) {
+          projectV2(number: $projectNumber) {
+            id
+          }
+        }
+    }`, {
+                projectOwnerName: owner,
+                projectNumber,
+            });
+            return idResp[ownerType].projectV2.id;
+        });
+    }
+    updateProjectField(projectNumber, issueNumber, fieldId, value) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Destructuring
+            const { octokit } = this;
+            // Get the project ID
+            const projectId = yield this.getProjectId(projectNumber);
+            const issue = yield this.octokit.issues.get({
+                owner: this.owner,
+                repo: this.repo,
+                issue_number: issueNumber,
+            });
+            // Add issue to project
+            const addResp = yield octokit.graphql(`mutation addIssueToProject($input: AddProjectV2ItemByIdInput!) {
+        addProjectV2ItemById(input: $input) {
+          item {
+            id
+          }
+        }
+      }`, {
+                input: {
+                    projectId,
+                    contentId: issue.data.node_id,
+                },
+            });
+            // Use the GraphQL API to request the project's columns.
+            const projectFields = yield octokit.graphql(`query getProjectFields($projectId: ID!) {
+        node(id: $projectId) {
+          ... on ProjectV2 {
+            fields(first: 100) {
+              nodes {
+                ... on ProjectV2Field {
+                  id
+                  dataType
+                  name
+                }
+                ... on ProjectV2IterationField {
+                  id
+                  name
+                  dataType
+                  configuration {
+                    iterations {
+                      startDate
+                      id
+                    }
+                  }
+                }
+                ... on ProjectV2SingleSelectField {
+                  id
+                  name
+                  dataType
+                  options {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+      }`, {
+                projectId,
+            });
+            const field = projectFields.node.fields.nodes.find((node) => fieldId === node.name);
+            if (!field) {
+                throw new Error(`Field with ID ${fieldId} not found`);
+            }
+            if (field.options) {
+                let option;
+                if (value.startsWith("[") && value.endsWith("]")) {
+                    const index = parseInt(value.slice(1, -1));
+                    if (!isNaN(index)) {
+                        option = field.options[index];
+                    }
+                }
+                else {
+                    option = field.options.find((o) => o.name.toLowerCase() === value.toLowerCase());
+                }
+                if (option) {
+                    value = option.id;
+                }
+            }
+            const updateFieldKey = this.getUpdateFieldValueKey(field.dataType);
+            const updatedItem = yield octokit.graphql(`mutation updateProjectV2ItemFieldValue($input: UpdateProjectV2ItemFieldValueInput!) {
+        updateProjectV2ItemFieldValue(input: $input) {
+          projectV2Item {
+            id
+          }
+        }
+      }`, {
+                input: {
+                    projectId,
+                    itemId: addResp.addProjectV2ItemById.item.id,
+                    fieldId: field.id,
+                    value: {
+                        [updateFieldKey]: value,
+                    },
+                },
+            });
+            return updatedItem;
+        });
+    }
+    getUpdateFieldValueKey(fieldDataType) {
+        if (fieldDataType === "TEXT") {
+            return "text";
+        }
+        else if (fieldDataType === "NUMBER") {
+            return "number";
+        }
+        else if (fieldDataType === "DATE") {
+            return "date";
+        }
+        else if (fieldDataType === "ITERATION") {
+            return "iterationId";
+        }
+        else if (fieldDataType === "SINGLE_SELECT") {
+            return "singleSelectOptionId";
+        }
+        else {
+            throw new Error(`Unsupported dataType: ${fieldDataType}. Must be one of 'text', 'number', 'date', 'singleSelectOptionId', 'iterationId'`);
+        }
+    }
+}
+exports["default"] = GitHubProjectsUtils;
 
 
 /***/ }),
@@ -29349,6 +29556,18 @@ class GitHubRepositoryUtils {
                 body,
                 prerelease,
             });
+        });
+    }
+    addLabelToIssues(issueNumbers, label) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield Promise.all(issueNumbers.map((issueNumber) => __awaiter(this, void 0, void 0, function* () {
+                yield this.octokit.issues.addLabels({
+                    owner: this.owner,
+                    repo: this.repo,
+                    issue_number: issueNumber,
+                    labels: [label],
+                });
+            })));
         });
     }
 }
