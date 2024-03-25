@@ -73,10 +73,21 @@ async function run() {
   }
 
   // Update project
+  core.info(`Project number: ${projectNumber}`);
+  core.info(`Project status column name: ${projectStatusColumnName}`);
+  core.info(`Issues: ${issues.map((issue) => issue.number).join(", ")}`);
+
+  core.info(`Debug: ${projectNumber && projectStatusColumnName}`);
   if (projectNumber && projectStatusColumnName) {
+    core.info(
+      `Updating project ${projectNumber} with status ${projectStatusColumnName}`
+    );
     const parsedProjectNumber = parseInt(projectNumber);
 
     for (const issue of issues) {
+      core.info(
+        `Updating project card of issue ${issue.number} with status ${projectStatusColumnName}`
+      );
       await gitHubProjectsUtils.updateProjectField(
         parsedProjectNumber,
         issue.number,
