@@ -1,0 +1,44 @@
+name: Tag Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: developemnt
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    name: Tag & Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT }}
+
+      - uses: wemogy/get-release-version-action@v4.0.0
+        id: get-release-version
+
+      - name: Create GitHub Release
+        uses: wemogy/create-release-action@v0.1.12
+        if: steps.get-release-version.outputs.has-changes == 'true' && steps.get-release-version.outputs.previous-version-name != 'v0.0.0'
+        with:
+          github-token: ${{ secrets.PAT }}
+          release-version-tag: ${{ steps.get-release-version.outputs.version-name }}
+          previous-version-tag: ${{ steps.get-release-version.outputs.previous-version-name }}
+          release-title: Version ${{ steps.get-release-version.outputs.version }}
+
+      - name: Create GitHub Release
+        uses: wemogy/create-release-action@v0.1.12
+        if: steps.get-release-version.outputs.has-changes == 'true' && steps.get-release-version.outputs.previous-version-name == 'v0.0.0'
+        with:
+          github-token: ${{ secrets.PAT }}
+          release-version-tag: ${{ steps.get-release-version.outputs.version-name }}
+          previous-version-tag: ""
+          release-title: Version ${{ steps.get-release-version.outputs.version }}

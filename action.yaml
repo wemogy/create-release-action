@@ -21,6 +21,18 @@ inputs:
   previous-version-tag:
     description: The name of the previous version
     default: ""
+  dry-run:
+    description: Indicator of whether or not is a dry run
+    default: "false"
+  label-issues-with:
+    description: Label to be added to issues (e.g. `released-dev`)
+    default: ""
+  project-number:
+    description: Number of the project to upsert issues
+    default: ""
+  project-status-column-name:
+    description: Name of the status column to upsert issues (e.g `In Progress`)
+    default: ""
 
 runs:
   using: "node20"

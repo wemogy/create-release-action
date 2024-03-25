@@ -202,4 +202,17 @@ export default class GitHubRepositoryUtils {
       prerelease,
     });
   }
+
+  public async addLabelToIssues(issueNumbers: number[], label: string) {
+    await Promise.all(
+      issueNumbers.map(async (issueNumber) => {
+        await this.octokit.issues.addLabels({
+          owner: this.owner,
+          repo: this.repo,
+          issue_number: issueNumber,
+          labels: [label],
+        });
+      })
+    );
+  }
 }
