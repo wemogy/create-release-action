@@ -1,12 +1,21 @@
 import IssueOrPr from "./types/IssueOrPr";
 
+function generateLabelFilter(label: string) {
+  return (issue: IssueOrPr) =>
+    issue.labels.find((l) => {
+      if (typeof l === "string") {
+        return l.toLowerCase() === label.toLowerCase();
+      }
+
+      return l.name.toLowerCase() === label.toLowerCase();
+    }) !== undefined;
+}
+
 export default class ReleaseNotesGenerator {
   public generateReleaseNotes(issues: IssueOrPr[]) {
     let releaseNotes = "## Release Notes\n\n";
 
-    const enhancements = issues.filter((issue) =>
-      issue.labels.includes("enhancement")
-    );
+    const enhancements = issues.filter(generateLabelFilter("enhancement"));
 
     if (enhancements.length > 0) {
       releaseNotes += "### Enhancements 🎁\n\n";
@@ -15,7 +24,7 @@ export default class ReleaseNotesGenerator {
       });
     }
 
-    const bugs = issues.filter((issue) => issue.labels.includes("bug"));
+    const bugs = issues.filter(generateLabelFilter("bug"));
 
     if (bugs.length > 0) {
       releaseNotes += "### Bug Fixes 🐞\n\n";
@@ -26,7 +35,8 @@ export default class ReleaseNotesGenerator {
 
     const others = issues.filter(
       (issue) =>
-        !issue.labels.includes("enhancement") && !issue.labels.includes("bug")
+        !generateLabelFilter("enhancement")(issue) &&
+        !generateLabelFilter("bug")(issue)
     );
 
     if (others.length > 0) {
