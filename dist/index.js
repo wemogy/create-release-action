@@ -29089,24 +29089,33 @@ function wrappy (fn, cb) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+function generateLabelFilter(label) {
+    return (issue) => issue.labels.find((l) => {
+        if (typeof l === "string") {
+            return l.toLowerCase() === label.toLowerCase();
+        }
+        return l.name.toLowerCase() === label.toLowerCase();
+    }) !== undefined;
+}
 class ReleaseNotesGenerator {
     generateReleaseNotes(issues) {
         let releaseNotes = "## Release Notes\n\n";
-        const enhancements = issues.filter((issue) => issue.labels.includes("enhancement"));
+        const enhancements = issues.filter(generateLabelFilter("enhancement"));
         if (enhancements.length > 0) {
             releaseNotes += "### Enhancements 🎁\n\n";
             enhancements.forEach((issue) => {
                 releaseNotes += `- ${issue.title} (#${issue.number})\n`;
             });
         }
-        const bugs = issues.filter((issue) => issue.labels.includes("bug"));
+        const bugs = issues.filter(generateLabelFilter("bug"));
         if (bugs.length > 0) {
             releaseNotes += "### Bug Fixes 🐞\n\n";
             bugs.forEach((issue) => {
                 releaseNotes += `- ${issue.title} (#${issue.number})\n`;
             });
         }
-        const others = issues.filter((issue) => !issue.labels.includes("enhancement") && !issue.labels.includes("bug"));
+        const others = issues.filter((issue) => !generateLabelFilter("enhancement")(issue) &&
+            !generateLabelFilter("bug")(issue));
         if (others.length > 0) {
             releaseNotes += "### Others 📚\n\n";
             others.forEach((issue) => {
