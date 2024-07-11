@@ -13,3 +13,10 @@
 | `label-issues-with`          | `false`  | Label to be added to issues (e.g. `released-dev`)              |
 | `project-number`             | `false`  | Number of the project to upsert issues                         |
 | `project-status-column-name` | `false`  | Name of the status column to upsert issues (e.g `In Progress`) |
+
+## Required permissions
+
+- **Repository**: `Contents`: `Read`
+- **Repository**: `Issues`: `Read & write`
+- **Organization**: `Projects`: `Read & write`
+
