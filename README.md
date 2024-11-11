@@ -20,3 +20,8 @@
 - **Repository**: `Issues`: `Read & write`
 - **Organization**: `Projects`: `Read & write`
 
+## Development
+
+### Prerequisites
+
+- Duplicate `env/env.template.json` to `env/env.json` and fill in the values. Use a personal access token with the `repo` scope.
